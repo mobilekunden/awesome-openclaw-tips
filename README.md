@@ -12,7 +12,6 @@
 <br />
 
 ![Tips](https://img.shields.io/badge/tips-18-8b5cf6?style=flat-square)
-![Topics](https://img.shields.io/badge/topics-memory%2C%20reliability%2C%20cost%2C%20automation-0f172a?style=flat-square)
 ![Status](https://img.shields.io/badge/status-tested%20and%20curated-16a34a?style=flat-square)
 
 </div>
@@ -47,6 +46,8 @@ This repo collects the best practical patterns, prompts, and guardrails for fixi
   - [OPS-01: Set explicit concurrency limits for agents and subagents](#ops-01-set-explicit-concurrency-limits-for-agents-and-subagents)
 - [Automation](#automation)
   - [AUTO-01: Standing orders define what, cron defines when](#auto-01-standing-orders-define-what-cron-defines-when)
+- [Architecture](#architecture)
+  - [ARCH-01: Stop using one generic agent for everything](#arch-01-stop-using-one-generic-agent-for-everything)
 
 ## Memory
 
@@ -899,6 +900,71 @@ Then show me:
 - which cron job or scheduled prompt you changed
 - the exact scheduled prompt before and after
 - what logic now lives in the standing order vs the cron job
+- any assumptions you made
+```
+
+</details>
+
+## Architecture
+
+### ARCH-01: Stop using one generic agent for everything
+
+Once OpenClaw is doing more than one kind of work, one generic agent usually becomes a quality bottleneck. Monitoring, research, and communication do not need the same prompt, the same tools, or the same model behavior.
+
+OpenClaw already has a real multi-agent pattern through `agents.list`, separate workspaces, and isolated sessions. That makes it practical to split distinct jobs into distinct agents instead of forcing one agent to do everything.
+
+Start with a small split:
+
+```json5
+{
+  agents: {
+    list: [
+      {
+        id: "monitor",
+        workspace: "~/.openclaw/workspace-monitor",
+        model: { primary: "openai/gpt-5-nano" }
+      },
+      {
+        id: "researcher",
+        workspace: "~/.openclaw/workspace-researcher",
+        model: { primary: "kimi-coding/k2p5" }
+      },
+      {
+        id: "communicator",
+        workspace: "~/.openclaw/workspace-communicator",
+        model: { primary: "anthropic/claude-opus-4-6" }
+      }
+    ]
+  }
+}
+```
+
+The point is not those exact models. The point is role separation. Keep the monitor cheap and narrow, the researcher good at reading and comparing, and the communicator optimized for human-facing output.
+
+Start with three roles, not twelve.
+
+<details>
+<summary><strong>Copy prompt - implement this tip for me</strong></summary>
+
+```md
+Review my OpenClaw setup and tell me whether I should split my current single-agent setup into a small multi-agent architecture with distinct roles.
+
+Do all of the following:
+
+1. Find my current OpenClaw agent configuration.
+2. Check whether I already use `agents.list` or if I am still effectively single-agent.
+3. Look at the kinds of work I expect this setup to do and identify whether there are clearly different roles such as monitoring, research, and communication.
+4. If a split makes sense, propose a small role-based architecture with distinct agent ids, workspace names, and model suggestions.
+5. Keep the recommendation conservative. Prefer 2-3 agents, not a large agent tree.
+6. Explain what each proposed agent would own and why that separation would improve quality, cost, or reliability.
+7. Do not change my config yet unless I ask you to after reviewing the recommendation.
+
+Then show me:
+- what agent setup I use now
+- whether I already have multi-agent support configured
+- the small architecture you recommend
+- what each proposed agent would do
+- what tradeoffs come with splitting the setup
 - any assumptions you made
 ```
 
