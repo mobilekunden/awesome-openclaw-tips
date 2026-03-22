@@ -234,3 +234,56 @@ For Telegram specifically, BotFather has a setting for this now. Open BotFather,
 </p>
 
 Once it is enabled, Telegram gives the bot separate tabs/topics in the chat UI. That is exactly what this tip needs - coding in one topic, research in another, admin in another - instead of one mixed transcript where everything contaminates everything else.
+
+### MEM-06: Make the workspace folder the source of truth and put it under git
+
+`AGENTS.md`, `SOUL.md`, `TOOLS.md`, `IDENTITY.md`, `USER.md`, `HEARTBEAT.md`, `MEMORY.md`, and `memory/` are not loose notes. They are operating state.
+
+OpenClaw's own docs recommend treating the workspace as private memory and putting it in a private git repo. That gives you backup, diff, and a clean way to see when a prompt, memory file, or operating rule changed.
+
+The practical setup is simple:
+
+```bash
+git init
+git add AGENTS.md SOUL.md TOOLS.md IDENTITY.md USER.md HEARTBEAT.md MEMORY.md memory/
+git commit -m "Add agent workspace"
+```
+
+If you use GitHub or GitLab, make the repo private and push it there. If git is installed, brand-new OpenClaw workspaces can even auto-initialize, which tells you this is not a weird custom pattern - it is a normal way to treat the workspace.
+
+This pairs naturally with `MEM-04`. If the workspace is the source of truth, git is how you keep that source of truth recoverable.
+
+<details>
+<summary><strong>Copy prompt - implement this tip for me</strong></summary>
+
+```md
+Set up my OpenClaw workspace as a private git-backed source of truth.
+
+Do all of the following:
+
+1. Check whether my OpenClaw workspace is already a git repo.
+2. If it is not, initialize git in the workspace.
+3. Add the main OpenClaw workspace files when present, including:
+   - `AGENTS.md`
+   - `SOUL.md`
+   - `TOOLS.md`
+   - `IDENTITY.md`
+   - `USER.md`
+   - `HEARTBEAT.md`
+   - `MEMORY.md`
+   - `memory/`
+4. Create an initial commit if one does not already exist.
+5. If a `.gitignore` is needed for local noise, add a minimal one.
+6. If a remote is already configured, show it.
+7. If no remote exists and GitHub CLI (`gh`) is installed and authenticated, create a new private GitHub repo automatically, add `origin`, and push.
+8. If `gh` is not available or not authenticated, do not fail vaguely - tell me the exact manual commands to create a private repo, add `origin`, and push.
+
+Then show me:
+- whether the workspace was already under git
+- what files were added to version control
+- the exact commit you created, if any
+- whether you created and pushed a private remote automatically
+- if not, the exact commands I should run next
+```
+
+</details>
