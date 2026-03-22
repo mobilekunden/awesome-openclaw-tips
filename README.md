@@ -49,6 +49,7 @@ This repo collects the best practical patterns, prompts, and guardrails for fixi
 - [Architecture](#architecture)
   - [ARCH-01: Stop using one generic agent for everything](#arch-01-stop-using-one-generic-agent-for-everything)
   - [ARCH-02: Keep your orchestrator as a manager, not the doer](#arch-02-keep-your-orchestrator-as-a-manager-not-the-doer)
+  - [ARCH-03: Give different models different prompt files](#arch-03-give-different-models-different-prompt-files)
 
 ## Memory
 
@@ -1007,6 +1008,46 @@ Then show me:
 - what work should stay with the main agent
 - what work should move to specialist agents
 - what tradeoffs come with this split
+- any assumptions you made
+```
+
+</details>
+
+### ARCH-03: Give different models different prompt files
+
+Model switching is not just about cost or speed. Different models follow instructions differently, handle tone differently, and fail in different ways. If you rely on multiple important model paths, one shared prompt setup can leave quality on the table.
+
+OpenClaw already gives you the main pieces needed for this: per-agent workspaces, per-agent model configuration, and separate workspace files injected into each agent's context. That makes it practical to keep different prompt variants for different agent/model paths instead of forcing one prompt style across everything.
+
+The practical version is simple:
+
+- keep one prompt/workspace setup for your main high-quality model path
+- keep a separate prompt/workspace setup for cheaper, narrower, or more operational models
+- tune each one for how that model actually behaves in practice
+
+This does not mean creating a huge prompt matrix. It means separating the prompt setups that clearly need different instructions.
+
+<details>
+<summary><strong>Copy prompt - implement this tip for me</strong></summary>
+
+```md
+Review my OpenClaw setup and tell me whether I should keep different prompt/workspace files for different important model paths instead of using one shared prompt setup for everything.
+
+Do all of the following:
+
+1. Find my current agent and model configuration.
+2. Check whether I already use multiple important model paths, such as a stronger main model and one or more cheaper or narrower models.
+3. Look at the kinds of work those models handle and identify whether they likely need different instructions, tone, or operating rules.
+4. If a split makes sense, recommend a small prompt/workspace separation strategy.
+5. Keep the recommendation practical. Prefer a few clear prompt variants, not a large prompt matrix.
+6. Explain what should stay shared across all prompt files and what should be tuned per model path.
+7. Do not change my files yet unless I ask you to after reviewing the recommendation.
+
+Then show me:
+- what agent/model setup I use now
+- which model paths look different enough to justify separate prompt setups
+- what should stay shared vs what should be tuned per model path
+- what tradeoffs come with keeping separate prompt files
 - any assumptions you made
 ```
 
