@@ -47,6 +47,7 @@ This repo collects the best practical patterns, prompts, and guardrails for fixi
   - [OPS-01: Set explicit concurrency limits for agents and subagents](#ops-01-set-explicit-concurrency-limits-for-agents-and-subagents)
 - [⏱️ Automation](#automation)
   - [AUTO-01: Standing orders define what, cron defines when](#auto-01-standing-orders-define-what-cron-defines-when)
+  - [AUTO-02: Use isolated cron jobs for noisy chores](#auto-02-use-isolated-cron-jobs-for-noisy-chores)
 - [🏗️ Architecture](#architecture)
   - [ARCH-01: Stop using one generic agent for everything](#arch-01-stop-using-one-generic-agent-for-everything)
   - [ARCH-02: Keep your orchestrator as a manager, not the doer](#arch-02-keep-your-orchestrator-as-a-manager-not-the-doer)
@@ -1176,6 +1177,51 @@ Then show me:
 - the exact agent block before and after
 - which spawned agents now share workspace context
 - which spawned agents stay isolated
+- any assumptions you made
+```
+
+</details>
+
+### AUTO-02: Use isolated cron jobs for noisy chores
+
+Some scheduled jobs do not belong in your main chat history. Frequent background chores like inbox cleanup, status polling, or routine maintenance can create noise if they keep waking the main session.
+
+OpenClaw supports isolated cron jobs for exactly this case. Isolated jobs run in a dedicated cron session instead of the main session, start with a fresh session id by default, and can announce a summary without dragging the full chore history into your main conversation.
+
+Use isolated jobs when the work is noisy, frequent, or mostly background:
+
+```bash
+openclaw cron add \
+  --name "Inbox cleanup" \
+  --cron "*/15 * * * *" \
+  --session isolated \
+  --message "Clean up routine inbox noise and report only anything actionable." \
+  --announce
+```
+
+This keeps the recurring job in its own `cron:<jobId>` session. It is a better fit than a main-session job when the task should stay in the background and only surface a useful summary.
+
+<details>
+<summary><strong>Copy prompt - implement this tip for me</strong></summary>
+
+```md
+Review my OpenClaw cron jobs and move noisy background chores to isolated cron sessions when they should not pollute the main session history.
+
+Do all of the following:
+
+1. Find my current OpenClaw cron jobs.
+2. Identify any scheduled jobs that are noisy, frequent, or mostly background work.
+3. Check whether those jobs currently run in the main session instead of isolated cron sessions.
+4. For jobs that should stay out of the main chat history, convert them to isolated cron jobs.
+5. Keep or set delivery behavior appropriately so I still get useful summaries when needed.
+6. Explain which jobs should stay main-session and which should be isolated.
+7. Preserve existing schedules unless there is a clear problem.
+
+Then show me:
+- which cron jobs you reviewed
+- which jobs you moved to isolated sessions
+- the exact cron job config or command before and after
+- what delivery behavior each isolated job will use
 - any assumptions you made
 ```
 
