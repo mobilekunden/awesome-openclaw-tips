@@ -41,6 +41,7 @@ This repo collects the best practical patterns, prompts, and guardrails for fixi
 - [Cost](#cost)
   - [COST-01: Your heartbeat model is costing you more than you think](#cost-01-your-heartbeat-model-is-costing-you-more-than-you-think)
   - [COST-02: Use cache-ttl pruning or idle sessions will re-cache junk history](#cost-02-use-cache-ttl-pruning-or-idle-sessions-will-re-cache-junk-history)
+  - [COST-03: Local models are often a false economy](#cost-03-local-models-are-often-a-false-economy)
 - [Operations](#operations)
   - [OPS-01: Set explicit concurrency limits for agents and subagents](#ops-01-set-explicit-concurrency-limits-for-agents-and-subagents)
 - [Automation](#automation)
@@ -712,6 +713,46 @@ Then show me:
 - the exact `agents.defaults.contextPruning` block before and after
 - whether this setup is relevant to my current providers/models
 - whether the TTL matches my current cache behavior well
+- any assumptions you made
+```
+
+</details>
+
+### COST-03: Local models are often a false economy
+
+Local models can look cheaper because the per-request API cost is zero. In practice, many OpenClaw setups pay for that elsewhere: expensive hardware, higher latency, weaker output, smaller context windows, or more operational work to keep the local stack reliable.
+
+OpenClaw's local-model docs are clear that strong local setups are possible, but they are not lightweight. OpenClaw expects large context and strong resistance to prompt injection. The docs recommend high-end hardware and the largest model variant you can run. Small or heavily quantized local models increase the tradeoff.
+
+That means local is usually not the default cost fix for OpenClaw. It makes more sense when you already have the hardware, have a strong privacy requirement, or are intentionally using a hybrid setup with hosted models still available as fallbacks.
+
+If you do run local, keep the setup realistic:
+
+- use the largest model you can run well
+- keep hosted models available as fallbacks with `models.mode: "merge"`
+- treat local as an infrastructure decision, not just a pricing trick
+
+<details>
+<summary><strong>Copy prompt - implement this tip for me</strong></summary>
+
+```md
+Review my OpenClaw model setup and tell me whether moving more of it to local models would actually reduce total cost for my workload.
+
+Do all of the following:
+
+1. Find my current OpenClaw model configuration.
+2. Check whether I already use any local providers such as Ollama, LM Studio, or another local OpenAI-compatible endpoint.
+3. Check whether my current setup is hosted-only, local-only, or hybrid.
+4. Explain the likely tradeoffs for my setup: API cost, hardware cost, latency, context window, output quality, and operational complexity.
+5. If local looks like a poor fit, say so clearly.
+6. If local could make sense, recommend a realistic shape such as hybrid hosted-primary with local fallback, or local-only for narrow workloads.
+7. Do not change my config yet unless I ask you to after reviewing the recommendation.
+
+Then show me:
+- what model setup I use now
+- whether I already have local-model support configured
+- the main reasons local would or would not make sense for me
+- the safest setup shape you recommend
 - any assumptions you made
 ```
 
