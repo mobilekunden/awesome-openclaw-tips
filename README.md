@@ -38,6 +38,9 @@ This repo collects the best practical patterns, prompts, and guardrails for fixi
   - [REL-01: Don't put all your fallbacks on the same provider](#rel-01-dont-put-all-your-fallbacks-on-the-same-provider)
   - [REL-02: Your agent says "done" when it isn't](#rel-02-your-agent-says-done-when-it-isnt)
   - [REL-03: Use heartbeat to rotate recurring checks, not just repeat one generic check](#rel-03-use-heartbeat-to-rotate-recurring-checks-not-just-repeat-one-generic-check)
+- [Cost](#cost)
+  - [COST-01: Your heartbeat model is costing you more than you think](#cost-01-your-heartbeat-model-is-costing-you-more-than-you-think)
+  - [COST-02: Use cache-ttl pruning or idle sessions will re-cache junk history](#cost-02-use-cache-ttl-pruning-or-idle-sessions-will-re-cache-junk-history)
 
 ## Memory
 
@@ -598,6 +601,114 @@ Then show me:
 - which checks will rotate
 - what counts as an actionable report vs `HEARTBEAT_OK`
 - whether you kept it as heartbeat or recommended cron for any specific check
+```
+
+</details>
+
+## Cost
+
+### COST-01: Your heartbeat model is costing you more than you think
+
+Heartbeat runs are small, but they repeat all day. If they use the same expensive model as your main agent, that background traffic adds cost faster than most people expect.
+
+OpenClaw lets you set a separate heartbeat model at `agents.defaults.heartbeat.model`.
+
+Use a cheaper model for heartbeats:
+
+```json5
+{
+  agents: {
+    defaults: {
+      heartbeat: {
+        model: "openai/gpt-5-nano"
+      }
+    }
+  }
+}
+```
+
+For most setups, heartbeat work is lightweight: check whether something needs attention, return `HEARTBEAT_OK`, or surface a short actionable update. That usually does not need your main high-cost model.
+
+<details>
+<summary><strong>Copy prompt - implement this tip for me</strong></summary>
+
+```md
+Review my OpenClaw heartbeat configuration and set a cheaper heartbeat-specific model if I am currently using an unnecessarily expensive one.
+
+Do all of the following:
+
+1. Find my OpenClaw config file.
+2. Check whether `agents.defaults.heartbeat.model` is already set.
+3. Check what my default main model is.
+4. If heartbeat is using the same high-cost model as my main agent, suggest a cheaper heartbeat model and recommend one.
+5. Keep the setup simple. Prefer changing only `agents.defaults.heartbeat.model` unless there is a clear reason to do more.
+6. Explain briefly what heartbeat runs currently do in my setup and why a cheaper model is or is not appropriate.
+7. After choosing the model, update the config carefully without overwriting unrelated heartbeat settings.
+
+Then show me:
+- which config file you changed
+- the exact `agents.defaults.heartbeat` block before and after
+- what model my main agent uses
+- what model heartbeat used before
+- what model heartbeat uses after
+- why that change makes sense for cost and workload
+```
+
+</details>
+
+### COST-02: Use cache-ttl pruning or idle sessions will re-cache junk history
+
+After a session sits idle past the prompt-cache TTL, the next request can end up caching old tool-result history all over again. If those old tool results are large and no longer useful, that first post-idle request costs more than it needs to.
+
+OpenClaw has a built-in config for this at `agents.defaults.contextPruning`. In `cache-ttl` mode, OpenClaw prunes old tool results from the in-memory prompt after the cache TTL window passes. It does not rewrite the session transcript on disk.
+
+Turn it on like this:
+
+```json5
+{
+  agents: {
+    defaults: {
+      contextPruning: {
+        mode: "cache-ttl",
+        ttl: "1h"
+      }
+    }
+  }
+}
+```
+
+This is mainly useful for Anthropic prompt caching behavior, including OpenRouter Anthropic models. It reduces the cache write on the first post-idle request by trimming old tool-result context before that request is sent.
+
+If you use Anthropic `cacheRetention`, match the pruning TTL to that cache window when possible:
+
+- `ttl: "5m"` pairs with `cacheRetention: "short"`
+- `ttl: "1h"` pairs with `cacheRetention: "long"`
+
+<details>
+<summary><strong>Copy prompt - implement this tip for me</strong></summary>
+
+```md
+Review my OpenClaw config and enable cache-ttl context pruning so idle sessions do not re-cache oversized tool-result history.
+
+Do all of the following:
+
+1. Find my OpenClaw config file.
+2. Check whether `agents.defaults.contextPruning` is already configured.
+3. If it is missing, add `agents.defaults.contextPruning` with:
+   - `mode = "cache-ttl"`
+   - `ttl = "1h"`
+4. If it already exists, merge carefully instead of overwriting unrelated pruning settings.
+5. Check whether I use Anthropic models directly or through OpenRouter Anthropic model refs.
+6. If I already use `cacheRetention`, tell me whether the pruning TTL matches it well.
+7. Explain briefly that this prunes old tool results from the in-memory prompt only, not from the on-disk session transcript.
+8. Keep the final config minimal unless there is a clear reason to tune additional pruning settings.
+
+Then show me:
+- which config file you changed
+- the exact `agents.defaults.contextPruning` block before and after
+- whether this setup is relevant to my current providers/models
+- whether the TTL matches my current cache behavior well
+- any assumptions you made
 ```
 
 </details>
