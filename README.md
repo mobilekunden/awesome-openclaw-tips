@@ -23,6 +23,22 @@ Most setups break for predictable reasons: cost drift, context bloat, weak memor
 
 This repo collects the best practical patterns, prompts, and guardrails for fixing those problems.
 
+## Table of Contents
+
+- [Memory](#memory)
+  - [MEM-01: Make your agent learn from its mistakes](#mem-01-make-your-agent-learn-from-its-mistakes)
+  - [MEM-02: Flush important state before compaction eats it](#mem-02-flush-important-state-before-compaction-eats-it)
+  - [MEM-03: Use SQLite memory search before you pay for embeddings](#mem-03-use-sqlite-memory-search-before-you-pay-for-embeddings)
+  - [MEM-04: Treat chat history as cache, not the source of truth](#mem-04-treat-chat-history-as-cache-not-the-source-of-truth)
+  - [MEM-05: Split conversations into threads so context stops bleeding across topics](#mem-05-split-conversations-into-threads-so-context-stops-bleeding-across-topics)
+  - [MEM-06: Make the workspace folder the source of truth and put it under git](#mem-06-make-the-workspace-folder-the-source-of-truth-and-put-it-under-git)
+  - [MEM-07: Back up your workspace continuously, not just once](#mem-07-back-up-your-workspace-continuously-not-just-once)
+  - [MEM-08: Periodically self-clean memory instead of letting it rot forever](#mem-08-periodically-self-clean-memory-instead-of-letting-it-rot-forever)
+- [Reliability](#reliability)
+  - [REL-01: Don't put all your fallbacks on the same provider](#rel-01-dont-put-all-your-fallbacks-on-the-same-provider)
+  - [REL-02: Your agent says "done" when it isn't](#rel-02-your-agent-says-done-when-it-isnt)
+  - [REL-03: Use heartbeat to rotate recurring checks, not just repeat one generic check](#rel-03-use-heartbeat-to-rotate-recurring-checks-not-just-repeat-one-generic-check)
+
 ## Memory
 
 ### MEM-01: Make your agent learn from its mistakes
@@ -476,6 +492,112 @@ Then show me:
 - the fallback chains you suggest
 - which option you recommend and why
 - after I choose, the exact config path and primary/fallback models after
+```
+
+</details>
+
+### REL-02: Your agent says "done" when it isn't
+
+One of the most common OpenClaw failures is fake completion. The agent acknowledges the task, says it is done, and never verifies whether anything actually happened.
+
+Add this to `AGENTS.md`:
+
+```md
+Every task follows Execute-Verify-Report. No exceptions.
+
+- Execute: do the actual work, not just acknowledge the instruction
+- Verify: confirm the result happened (file exists, message delivered, data saved)
+- Report: say what was done and what was verified
+
+"I'll do that" is not execution.
+"Done" without verification is not acceptable.
+If execution fails, retry once with an adjusted approach.
+If it fails again, report the failure with a diagnosis. Never fail silently.
+3 attempts max, then escalate to the user.
+```
+
+This does not change what your agent can do. It changes what counts as finished.
+
+<details>
+<summary><strong>Copy prompt - implement this tip for me</strong></summary>
+
+```md
+Update my OpenClaw instructions so the agent does not report fake completion.
+
+Do all of the following:
+
+1. Find the right workspace instruction file, preferably `AGENTS.md`.
+2. Add an explicit Execute-Verify-Report rule for every task.
+3. Include these exact behavioral requirements:
+   - execute the task, do not just acknowledge it
+   - verify the result actually happened
+   - report what was done and what was verified
+   - retry once with an adjusted approach if execution fails
+   - if it fails again, report the failure with a diagnosis
+   - never fail silently
+   - after 3 total attempts, escalate to the user
+4. Merge with any existing task-execution rules instead of creating conflicting instructions.
+5. Keep the final instruction block short, clear, and enforceable.
+
+Then show me:
+- which file you changed
+- the exact rule block you added
+- any existing rules you had to merge with
+- any edge cases or ambiguities you noticed
+```
+
+</details>
+
+### REL-03: Use heartbeat to rotate recurring checks, not just repeat one generic check
+
+A generic heartbeat check can keep returning `HEARTBEAT_OK` while email sync is broken, calendar access expired, git is dirty, or a task queue has been stalled for hours.
+
+OpenClaw already has a real `HEARTBEAT.md` pattern for periodic awareness. A practical way to get more value from it is to rotate through a few small recurring checks instead of repeating the same generic check every time.
+
+The pattern is simple:
+
+```md
+Read `heartbeat-state.json`. Run whichever check is most overdue.
+
+- Email: every 30 min (9 AM - 9 PM)
+- Calendar: every 2 hours (8 AM - 10 PM)
+- Tasks: every 30 min
+- Git: every 24 hours
+- System: every 24 hours (3 AM)
+
+Process:
+1. Load timestamps from `heartbeat-state.json`
+2. Calculate which check is most overdue
+3. Run only that check
+4. Update timestamp
+5. Report only if something is actionable
+6. Otherwise return `HEARTBEAT_OK`
+```
+
+This works well when you want lightweight recurring coverage without creating a separate cron job for every single check.
+
+<details>
+<summary><strong>Copy prompt - implement this tip for me</strong></summary>
+
+```md
+Upgrade my OpenClaw heartbeat so it rotates through a few recurring checks instead of repeating one generic check.
+
+Do all of the following:
+
+1. Find my current `HEARTBEAT.md` setup.
+2. Replace or merge it with a rotating checklist that runs the single most overdue recurring check on each heartbeat.
+3. Create or update a `heartbeat-state.json` file to track the last successful run time for each check.
+4. Keep the checks practical and low-noise. Only report when something needs attention. Otherwise return `HEARTBEAT_OK`.
+5. Reuse my existing heartbeat structure if it already has useful checks.
+6. Keep this as a heartbeat workflow unless I already have a better reason to use separate cron jobs for exact timing.
+7. Explain briefly which parts are standard OpenClaw heartbeat behavior and which parts are the rotating-check pattern being added.
+
+Then show me:
+- what you changed in `HEARTBEAT.md`
+- whether you created or updated `heartbeat-state.json`
+- which checks will rotate
+- what counts as an actionable report vs `HEARTBEAT_OK`
+- whether you kept it as heartbeat or recommended cron for any specific check
 ```
 
 </details>

@@ -102,6 +102,26 @@ Avoid:
 - filler openings
 - generic productivity advice dressed up as an OpenClaw tip
 
+## Writing style guidelines
+
+Write this repo like technical documentation, not like a blog post, sales page, or personal essay.
+
+- Use plain technical language.
+- Prefer concrete statements over framing language.
+- State what OpenClaw does, what breaks, and what fixes it.
+- Keep the wording calm and neutral.
+- If a pattern is a practical workflow built on top of OpenClaw, say that directly.
+- If something is official OpenClaw behavior, say that directly too.
+
+Avoid:
+
+- poetic or dramatic phrasing
+- editorial framing like "the failure mode here is" when a direct sentence is clearer
+- loaded wording like "dumb," "stupid," "useless," or similar
+- overly negative language when a precise technical description is enough
+- marketing-style copy like "powerful," "game-changing," "unlock," or "next-level"
+- vague contrast lines that sound nice but explain nothing
+
 Good:
 
 - "Turn on the built-in pre-compaction memory flush"
