@@ -41,6 +41,8 @@ This repo collects the best practical patterns, prompts, and guardrails for fixi
 - [Cost](#cost)
   - [COST-01: Your heartbeat model is costing you more than you think](#cost-01-your-heartbeat-model-is-costing-you-more-than-you-think)
   - [COST-02: Use cache-ttl pruning or idle sessions will re-cache junk history](#cost-02-use-cache-ttl-pruning-or-idle-sessions-will-re-cache-junk-history)
+- [Operations](#operations)
+  - [OPS-01: Set explicit concurrency limits for agents and subagents](#ops-01-set-explicit-concurrency-limits-for-agents-and-subagents)
 
 ## Memory
 
@@ -708,6 +710,62 @@ Then show me:
 - the exact `agents.defaults.contextPruning` block before and after
 - whether this setup is relevant to my current providers/models
 - whether the TTL matches my current cache behavior well
+- any assumptions you made
+```
+
+</details>
+
+## Operations
+
+### OPS-01: Set explicit concurrency limits for agents and subagents
+
+If you run multi-agent workflows, concurrency is one of the easiest ways to lose control of cost and runtime behavior. A stuck retry loop or aggressive subagent fan-out can keep multiple runs active at once unless you set deliberate limits.
+
+OpenClaw gives you two separate caps:
+
+- `agents.defaults.maxConcurrent` - max parallel main agent runs across sessions
+- `agents.defaults.subagents.maxConcurrent` - max parallel subagent runs in the dedicated subagent lane
+
+Set them explicitly:
+
+```json5
+{
+  agents: {
+    defaults: {
+      maxConcurrent: 3,
+      subagents: {
+        maxConcurrent: 8
+      }
+    }
+  }
+}
+```
+
+The main agent limit defaults to `1`. The subagent lane defaults to `8`. Even if those defaults are acceptable, setting them explicitly makes the intended safety limits clear and keeps later config changes from drifting.
+
+<details>
+<summary><strong>Copy prompt - implement this tip for me</strong></summary>
+
+```md
+Review my OpenClaw concurrency settings and set explicit safe limits for both main agent runs and subagent runs.
+
+Do all of the following:
+
+1. Find my OpenClaw config file.
+2. Check whether `agents.defaults.maxConcurrent` is already set.
+3. Check whether `agents.defaults.subagents.maxConcurrent` is already set.
+4. If either value is missing, add explicit concurrency limits with sensible defaults.
+5. If values already exist, explain whether they look conservative, aggressive, or mismatched for normal use.
+6. Keep the config simple. Prefer changing only these concurrency keys unless there is a clear reason to do more.
+7. Explain briefly that main-agent concurrency and subagent concurrency are separate limits.
+8. Merge carefully without overwriting unrelated config.
+
+Then show me:
+- which config file you changed
+- the exact concurrency block before and after
+- what the main agent concurrency limit is
+- what the subagent concurrency limit is
+- why those limits make sense for safety and cost control
 - any assumptions you made
 ```
 
