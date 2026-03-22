@@ -70,3 +70,54 @@ Then show me:
 </details>
 
 For a fuller version with automatic hooks, structured entries, and a promotion workflow, install the [self-improving-agent skill](https://clawhub.ai/pskoett/self-improving-agent).
+
+### MEM-02: Flush important state before compaction eats it
+
+Long OpenClaw sessions do not grow forever. Once context gets full, OpenClaw auto-compacts the session. That usually means a summary survives, plus recent turns. Anything important that only lives in chat is now at risk.
+
+Treat compaction as a deadline. Important state should already be on disk before it happens.
+
+Turn on the built-in pre-compaction memory flush:
+
+```json
+"agents": {
+  "defaults": {
+    "compaction": {
+      "memoryFlush": {
+        "enabled": true,
+        "softThresholdTokens": 4000
+      }
+    }
+  }
+}
+```
+
+This watches context usage, triggers a silent flush before hard compaction, and writes durable state to the workspace. It runs once per compaction cycle and uses `NO_REPLY`, so it does not spam the user.
+
+This pairs naturally with `MEM-01`. Chat is working memory. Files are memory.
+
+<details>
+<summary><strong>Copy prompt - implement this tip for me</strong></summary>
+
+```md
+Implement pre-compaction memory flushing in my OpenClaw setup so important state gets written to disk before context compaction happens.
+
+Do all of the following:
+
+1. Find my OpenClaw config and enable built-in pre-compaction memory flush.
+2. Set this config:
+   - `agents.defaults.compaction.memoryFlush.enabled = true`
+   - `agents.defaults.compaction.memoryFlush.softThresholdTokens = 4000`
+3. Check whether I already have a durable memory system such as `.learnings/`, `MEMORY.md`, or other workspace state files.
+4. If I do, make sure the setup works with that existing system instead of creating a duplicate memory path.
+5. If I do not, create a minimal durable place where important state should be flushed before compaction.
+6. Add a short note in the relevant workspace instructions explaining that chat is not durable memory and important state must live in files.
+
+Then show me:
+- which config file you changed
+- the exact config block you added or updated
+- where important state will be flushed to
+- any assumptions you made about my current memory setup
+```
+
+</details>
