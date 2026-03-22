@@ -417,3 +417,61 @@ Then show me:
 ```
 
 </details>
+
+## Reliability
+
+### REL-01: Don't put all your fallbacks on the same provider
+
+When one provider rate-limits or goes down, every model behind that provider can fail together. If your entire fallback chain lives inside one vendor, that is not redundancy.
+
+Bad:
+
+```json
+"primary": "openai/gpt-5",
+"fallbacks": [
+  "openai/gpt-5-mini",
+  "openai/gpt-5-nano"
+]
+```
+
+Better:
+
+```json
+"primary": "openai/gpt-5",
+"fallbacks": [
+  "kimi-coding/k2p5",
+  "synthetic/hf:zai-org/GLM-4.7",
+  "openrouter/google/gemini-3-flash-preview"
+]
+```
+
+The point is not those exact providers. The point is failure independence. A limit or outage in one stack should not take your whole agent down with it.
+
+<details>
+<summary><strong>Copy prompt - implement this tip for me</strong></summary>
+
+```md
+Review my OpenClaw model fallback setup and help me choose a provider-diverse fallback chain before changing anything.
+
+Do all of the following:
+
+1. Find my current OpenClaw model configuration.
+2. Check which providers are currently available in my setup.
+3. Research or inspect the currently available models from those providers and identify good fallback candidates.
+4. Check whether my current primary model and fallbacks are too concentrated in one provider.
+5. Propose a few provider-diverse fallback chains and recommend one, keeping the setup simple.
+6. Keep my current primary model if it still makes sense, unless there is a clear reason to change it.
+7. Explain the tradeoffs of the suggested options - reliability, cost, speed, and model quality.
+8. Ask me to choose one of the suggested fallback chains before changing the config.
+9. After I choose, update the config carefully.
+
+Then show me:
+- the config file you changed
+- the exact primary and fallback models before
+- the provider and model options you discovered
+- the fallback chains you suggest
+- which option you recommend and why
+- after I choose, the exact primary and fallback models after
+```
+
+</details>
