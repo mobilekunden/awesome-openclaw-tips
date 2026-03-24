@@ -12,9 +12,10 @@
 
 ## Table of Contents
 
+- [💬 Messages](#messages)
+  - [MES-01: Enable ack reactions by setting messages.ackReactionScope](#mes-01-enable-ack-reactions-by-setting-messagesackreactionscope)
 - [📨 Telegram](#telegram)
   - [TEL-01: Use Telegram inline buttons for recurring actions](#tel-01-use-telegram-inline-buttons-for-recurring-actions)
-  - [TEL-02: Use Telegram reactions for lightweight feedback](#tel-02-use-telegram-reactions-for-lightweight-feedback)
 - [🧠 Memory](#memory)
   - [MEM-01: Make your agent learn from its mistakes](#mem-01-make-your-agent-learn-from-its-mistakes)
   - [MEM-02: Flush important state before compaction eats it](#mem-02-flush-important-state-before-compaction-eats-it)
@@ -46,29 +47,73 @@
   - [ARCH-03: Give different models different prompt files](#arch-03-give-different-models-different-prompt-files)
   - [ARCH-04: Predefine subagent workspaces or they lose shared context](#arch-04-predefine-subagent-workspaces-or-they-lose-shared-context)
 
+<a id="messages"></a>
+
+## 💬 Messages
+
+### MES-01: Enable ack reactions by setting `messages.ackReactionScope`
+
+<table width="100%">
+  <tr>
+    <td width="58%" valign="top">
+      <p>Ack reactions are controlled by <code>messages.ackReactionScope</code>. If you want acknowledgements to appear more broadly, set the scope explicitly instead of relying on the default.</p>
+      <p>Use <code>all</code> when you want broad ack reactions across chats instead of narrower behavior like direct messages only or group mentions only.</p>
+      <p>Set it like this:</p>
+      <pre lang="json5"><code>{
+  messages: {
+    ackReactionScope: "all"
+  }
+}</code></pre>
+      <p>Valid values are <code>group-mentions</code>, <code>group-all</code>, <code>direct</code>, <code>all</code>, <code>off</code>, and <code>none</code>.</p>
+    </td>
+    <td width="42%" valign="top">
+      <img src="./tips/mes-01/ack-reactions.png" alt="Telegram message showing ack reactions on a user message" width="100%" />
+    </td>
+  </tr>
+</table>
+
+<details>
+<summary><strong>Copy prompt - implement this tip for me</strong></summary>
+
+```md
+Review my OpenClaw config and enable ack reactions by setting `messages.ackReactionScope` explicitly.
+
+Do all of the following:
+
+1. Find my OpenClaw config file.
+2. Check whether `messages.ackReactionScope` is already set.
+3. If it is missing, explain the available values:
+   - `group-mentions`
+   - `group-all`
+   - `direct`
+   - `all`
+   - `off`
+   - `none`
+4. Unless I want a narrower behavior, recommend `messages.ackReactionScope = "all"`.
+5. After I choose, update the config carefully.
+
+Then show me:
+- which config file you changed
+- the exact `messages` block before and after
+- what `messages.ackReactionScope` is set to now
+- what the selected scope means
+- any assumptions you made
+```
+
+</details>
+
 <a id="telegram"></a>
 
 ## 📨 Telegram
 
 ### TEL-01: Use Telegram inline buttons for recurring actions
 
-<table>
+<table width="100%">
   <tr>
     <td width="58%" valign="top">
       <p>If Telegram users have to keep typing the same replies, approvals, or short commands, the workflow gets slower than it needs to be. OpenClaw supports Telegram inline buttons, so recurring actions can be one tap instead of another typed message.</p>
       <p>The important distinction is that plain text option lists are not inline buttons. For real clickable Telegram buttons, the message must include a real inline-keyboard payload.</p>
       <p>This is a good fit for approvals and review flows. It also works well for quick replies and common follow-up actions. Use it anywhere repeated choices are clearer as taps than typed messages.</p>
-      <p>Turn on inline buttons with Telegram capability scope:</p>
-      <pre lang="json5"><code>{
-  channels: {
-    telegram: {
-      capabilities: {
-        inlineButtons: "all"
-      }
-    }
-  }
-}</code></pre>
-      <p>The supported scopes are <code>off</code>, <code>dm</code>, <code>group</code>, <code>all</code>, and <code>allowlist</code>.</p>
     </td>
     <td width="42%" valign="top">
       <img src="./tips/tel-01/telegram-inline-buttons.png" alt="Telegram inline buttons rendered as real clickable buttons in chat" width="100%" />
@@ -76,6 +121,17 @@
   </tr>
 </table>
 
+<p>Turn on inline buttons with Telegram capability scope:</p>
+<pre lang="json5"><code>{
+channels: {
+  telegram: {
+    capabilities: {
+      inlineButtons: "all"
+    }
+  }
+}
+}</code></pre>
+<p>The supported scopes are <code>off</code>, <code>dm</code>, <code>group</code>, <code>all</code>, and <code>allowlist</code>.</p>
 <details>
 <summary><strong>Copy prompt - implement this tip for me</strong></summary>
 
@@ -118,61 +174,6 @@ Then report back with:
 ```
 
 </details>
-
-### TEL-02: Use Telegram reactions for lightweight feedback
-
-Telegram reactions are useful when you want lightweight feedback without another full message. OpenClaw supports both sending reactions and reacting to user reactions as system events.
-
-The main Telegram reaction controls are:
-
-- `channels.telegram.ackReaction` - acknowledgement emoji while processing
-- `channels.telegram.reactionLevel` - `off | ack | minimal | extensive`
-- `channels.telegram.reactionNotifications` - `off | own | all`
-
-For example:
-
-```json5
-{
-  channels: {
-    telegram: {
-      ackReaction: "👀",
-      reactionLevel: "minimal",
-      reactionNotifications: "own"
-    }
-  }
-}
-```
-
-`ackReaction` is good for immediate processing feedback. `reactionNotifications` is useful when you want the bot to notice reactions on its own messages without turning every reaction in the chat into an event.
-
-<details>
-<summary><strong>Copy prompt - implement this tip for me</strong></summary>
-
-```md
-Review my OpenClaw Telegram reaction setup and configure lightweight reaction-based feedback that fits how I use the bot.
-
-Do all of the following:
-
-1. Find my OpenClaw config file.
-2. Check whether I already use the Telegram channel.
-3. Check the current values of `channels.telegram.ackReaction`, `channels.telegram.reactionLevel`, and `channels.telegram.reactionNotifications`.
-4. Explain the choices for:
-   - `reactionLevel`: `off`, `ack`, `minimal`, `extensive`
-   - `reactionNotifications`: `off`, `own`, `all`
-5. Recommend a practical default setup for a normal personal Telegram bot.
-6. After I choose, update the config carefully.
-
-Then show me:
-- which config file you changed
-- the exact reaction config before and after
-- what each selected setting does
-- why that setup fits a Telegram bot well
-- any assumptions you made
-```
-
-</details>
-
-
 
 <a id="memory"></a>
 
@@ -277,23 +278,20 @@ Then show me:
 
 ### MEM-03: Use SQLite memory search before you pay for embeddings
 
-Most personal OpenClaw setups do not need a vector database just to find old notes. A local SQLite index with FTS5 is often enough.
-
-This tip ships with supporting files in `tips/mem-03/`.
-
-Build the database:
-
-```bash
-node tips/mem-03/rebuild-db.js
-```
-
-Search it:
-
-```bash
-node tips/mem-03/relevant-memory.js "query about previous work"
-```
-
-The scripts scan markdown files, build a SQLite database, and use full-text search to surface likely matches quickly. No API costs, no embedding pipeline, no external service.
+<table width="100%">
+  <tr>
+    <td width="58%" valign="top">
+      <p>Most personal OpenClaw setups do not need a vector database just to find old notes. A local SQLite index with FTS5 is often enough.</p>
+      <p>This tip ships with supporting files in <code>tips/mem-03/</code>.</p>
+      <p>Build the database:</p><code>node tips/mem-03/rebuild-db.js</code>
+      <p>Search it:</p><code>node tips/mem-03/relevant-memory.js "query about previous work"</code>
+      <p>The scripts scan markdown files, build a SQLite database, and use full-text search to surface likely matches quickly. No API costs, no embedding pipeline, no external service.</p>
+    </td>
+    <td width="42%" valign="top">
+      <img src="./tips/mem-03/sqlite-memory-search.png" alt="SQLite memory search returning relevant matches in Telegram" width="100%" />
+    </td>
+  </tr>
+</table>
 
 <details>
 <summary><strong>Copy prompt - implement this tip for me</strong></summary>
@@ -1388,5 +1386,6 @@ Then show me:
 ```
 
 </details>
+
 
 <!-- TIP_APPEND_EOF: add new tip sections above this line only -->
